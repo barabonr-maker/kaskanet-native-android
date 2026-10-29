@@ -1,4 +1,3 @@
-
 name: KaskaNet Android Build
 
 on:
@@ -20,31 +19,24 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Find Android project
-        id: project
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Gradle
         shell: bash
         run: |
-          WRAPPER=$(find . -type f -name gradlew \
-            -not -path './.git/*' | head -n 1)
-
-          if [ -z "$WRAPPER" ]; then
-            echo "::error::Gradle wrapper gradlew was not found"
-            echo "Check that the Android project files were uploaded."
-            exit 1
-          fi
-
-          DIR=$(dirname "$WRAPPER")
-          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
-          chmod +x "$WRAPPER"
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp
+          echo "/tmp/gradle-8.9/bin" >> "$GITHUB_PATH"
 
       - name: Build APK
-        working-directory: ${{ steps.project.outputs.dir }}
-        run: ./gradlew assembleDebug
+        working-directory: kaska-native
+        run: gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: KaskaNet-Android-APK
-          path: '**/build/outputs/apk/debug/*.apk'
+          path: kaska-native/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 7
